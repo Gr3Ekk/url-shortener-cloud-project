@@ -1,57 +1,48 @@
-# TODO: ELI - URL Redirect Handler
-"""
-TASKS FOR ELI:
-1. Create Flask blueprint for redirect endpoint
-2. Implement GET /{short_code} endpoint
-3. Handle URL retrieval and redirection
-4. Implement 404 error handling for non-existent codes
-5. Add click tracking (increment counter)
-6. Handle edge cases and errors
+# routes/redirect.py
 
-ENDPOINT SPECIFICATION:
-GET /{short_code}
-
-SUCCESS RESPONSE:
-- HTTP 302 Redirect to original URL
-- Update click counter in database
-
-ERROR RESPONSE:
-- HTTP 404 with custom error page for non-existent short codes
-
-INTEGRATION WITH LUIS'S WORK:
-- Import and use Luis's database functions from models.url_mapping
-- Use Luis's helper function from routes.shorten import get_original_url_for_redirect
-- Call Luis's increment_click_count function for analytics
-
-EXAMPLE STRUCTURE:
-from flask import Blueprint, redirect, render_template, abort
-from models.url_mapping import URLMapping  # Luis's model
-# from routes.shorten import get_original_url_for_redirect  # Luis's helper
+from flask import Blueprint, redirect, render_template, abort, jsonify
+from models.url_mapping import URLMapping
+from config.database import db
 
 redirect_bp = Blueprint('redirect', __name__)
 
-@redirect_bp.route('/<short_code>')
+@redirect_bp.route('/<string:short_code>', methods=['GET'])
 def redirect_url(short_code):
-    # Validate short_code format
-    # Get original URL using Luis's functions
-    # If URL exists:
-    #   - Increment click counter
-    #   - Redirect to original URL
-    # If URL doesn't exist:
-    #   - Return 404 error page
-    pass
+    # Validate short code format (basic length check)
+    if not short_code or len(short_code) > 10:
+        return render_template('404.html'), 404
 
-@redirect_bp.errorhandler(404)
-def not_found(error):
-    # Render custom 404 page
-    pass
+    # Retrieve URL from database
+    url_mapping = URLMapping.query.filter_by(short_code=short_code).first()
 
-# Optional: Analytics endpoint
-@redirect_bp.route('/api/stats/<short_code>')
+    if url_mapping:
+        # Increment click count
+        url_mapping.clicks += 1
+        db.session.commit()
+
+        # Redirect to original URL
+        return redirect(url_mapping.original_url, code=302)
+    else:
+        # Return 404 page
+        return render_template('404.html'), 404
+
+
+# Optional: analytics endpoint
+@redirect_bp.route('/api/stats/<string:short_code>', methods=['GET'])
 def get_url_stats(short_code):
-    # Return click statistics for a short URL
-    # Use Luis's database functions
-    pass
-"""
+    url_mapping = URLMapping.query.filter_by(short_code=short_code).first()
 
-# ELI: Replace this comment block with actual redirect endpoint code
+    if url_mapping:
+        return jsonify({
+            'original_url': url_mapping.original_url,
+            'short_code': url_mapping.short_code,
+            'clicks': url_mapping.clicks
+        }), 200
+    else:
+        return jsonify({'error': 'Short URL not found'}), 404
+
+
+# Optional: custom 404 handler if needed for the whole blueprint
+@redirect_bp.app_errorhandler(404)
+def not_found(error):
+    return render_template('404.html'), 404
