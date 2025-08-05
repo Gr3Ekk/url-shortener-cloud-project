@@ -1,0 +1,28 @@
+# TODO: DERRICK - Python Dependencies
+"""
+TASKS FOR DERRICK (with input from Luis):
+1. Add Flask and related dependencies
+2. Add Google Cloud Firestore client library
+3. Add any additional libraries needed for URL validation
+4. Add testing libraries
+5. Specify exact versions for production stability
+
+REQUIRED DEPENDENCIES:
+- Flask (web framework)
+- google-cloud-firestore (database)
+- requests (for URL validation)
+- pytest (for testing)
+- gunicorn (for production deployment)
+
+EXAMPLE FORMAT:
+Flask==2.3.3
+google-cloud-firestore==2.11.1
+requests==2.31.0
+pytest==7.4.0
+gunicorn==21.2.0
+"""
+
+# DERRICK: Replace this comment with actual requirements
+# Flask==x.x.x
+# google-cloud-firestore==x.x.x
+# Add other dependencies here

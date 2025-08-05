@@ -1,0 +1,39 @@
+# TODO: DERRICK - Google App Engine Configuration
+"""
+TASKS FOR DERRICK:
+1. Set runtime to python39 or python311
+2. Configure environment variables for Google Cloud Project
+3. Set up automatic scaling parameters
+4. Configure health checks
+5. Set up static file handling if needed
+6. Add any custom entrypoint if required
+
+REQUIRED CONFIGURATION:
+- Runtime environment
+- Environment variables for database
+- Scaling configuration
+- Health check endpoints
+
+INTEGRATION WITH TEAM:
+- Work with Luis to determine required environment variables
+- Coordinate with team on scaling requirements
+- Ensure proper configuration for Firestore access
+
+EXAMPLE STRUCTURE:
+runtime: python39
+service: default
+
+env_variables:
+  GOOGLE_CLOUD_PROJECT: "your-project-id"
+  # Add other environment variables here
+
+automatic_scaling:
+  min_instances: 0
+  max_instances: 10
+  target_cpu_utilization: 0.6
+
+health_check:
+  enable_health_check: true
+"""
+
+# DERRICK: Replace this comment with actual app.yaml configuration
