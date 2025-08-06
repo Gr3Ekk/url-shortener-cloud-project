@@ -1,61 +1,101 @@
-# TODO: DERRICK - Test Cases for URL Shortening API
-"""
-TASKS FOR DERRICK:
-1. Write test cases for the shortening API endpoint
-2. Test valid URL shortening
-3. Test invalid URL handling
-4. Test custom alias functionality
-5. Test duplicate alias handling
-6. Test rate limiting (if implemented)
-7. Integration testing with database
-
-REQUIRED TEST SCENARIOS:
-- Valid URL shortening with auto-generated code
-- Valid URL with custom alias
-- Invalid URL format handling
-- Duplicate custom alias error
-- Missing URL in request
-- Malformed JSON request
-- Database connection errors
-
-DEPENDENCIES:
-- Requires Luis's implementation of routes/shorten.py
-- Requires Luis's database setup in models/url_mapping.py
-- Requires proper test database configuration
-
-EXAMPLE STRUCTURE:
-import pytest
+import unittest
 import json
-from app import app  # Main Flask app
-from config.database import init_db
+import os
+import sys
 
-class TestShortenAPI:
-    @pytest.fixture
-    def client(self):
-        # Set up test client
-        app.config['TESTING'] = True
-        with app.test_client() as client:
-            yield client
-    
-    def test_valid_url_shortening(self, client):
-        # Test successful URL shortening
-        pass
-    
-    def test_custom_alias_shortening(self, client):
-        # Test URL shortening with custom alias
-        pass
-    
-    def test_invalid_url_format(self, client):
-        # Test error handling for invalid URLs
-        pass
-    
-    def test_duplicate_custom_alias(self, client):
-        # Test duplicate alias handling
-        pass
-    
-    def test_missing_url_parameter(self, client):
-        # Test missing required parameters
-        pass
-"""
+# Add the parent directory to the path so we can import our modules
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# DERRICK: Replace this comment block with actual test code
+from app import create_app
+
+class TestShortenAPI(unittest.TestCase):
+    def setUp(self):
+        """Set up test environment"""
+        # Force mock database for testing
+        os.environ['USE_MOCK_DATABASE'] = 'true'
+        
+        self.app = create_app()
+        self.app.config['TESTING'] = True
+        self.client = self.app.test_client()
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+    
+    def tearDown(self):
+        """Clean up after tests"""
+        self.app_context.pop()
+    
+    def test_shorten_url_success(self):
+        """Test successful URL shortening"""
+        response = self.client.post('/api/shorten',
+                                  data=json.dumps({'url': 'https://google.com'}),
+                                  content_type='application/json')
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        
+        # Check required fields in response
+        self.assertIn('short_url', data)
+        self.assertIn('short_code', data)
+        self.assertIn('original_url', data)
+        self.assertEqual(data['original_url'], 'https://google.com')
+        
+        # Verify short_code is the right length (6 characters)
+        self.assertEqual(len(data['short_code']), 6)
+    
+    def test_shorten_url_invalid_url(self):
+        """Test invalid URL rejection"""
+        response = self.client.post('/api/shorten',
+                                  data=json.dumps({'url': 'not-a-url'}),
+                                  content_type='application/json')
+        
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.data)
+        self.assertIn('error', data)
+    
+    def test_shorten_url_missing_url(self):
+        """Test missing URL parameter"""
+        response = self.client.post('/api/shorten',
+                                  data=json.dumps({}),
+                                  content_type='application/json')
+        
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.data)
+        self.assertIn('error', data)
+    
+    def test_shorten_url_malformed_json(self):
+        """Test malformed JSON request"""
+        response = self.client.post('/api/shorten',
+                                  data='{"url":"https://example.com"}/',  # Broken JSON with trailing slash
+                                  content_type='application/json')
+        
+        self.assertEqual(response.status_code, 400)
+    
+    def test_health_check_endpoint(self):
+        """Test health check endpoint"""
+        response = self.client.get('/api/health')
+        self.assertEqual(response.status_code, 200)
+        
+        data = json.loads(response.data)
+        self.assertEqual(data['status'], 'healthy')
+    
+    def test_shorten_url_statistics(self):
+        """Test URL statistics endpoint"""
+        # First create a URL
+        response = self.client.post('/api/shorten',
+                                  data=json.dumps({'url': 'https://example.com'}),
+                                  content_type='application/json')
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        short_code = data['short_code']
+        
+        # Then get statistics
+        response = self.client.get(f'/api/stats/{short_code}')
+        self.assertEqual(response.status_code, 200)
+        
+        stats_data = json.loads(response.data)
+        self.assertIn('click_count', stats_data)
+        self.assertIn('created_at', stats_data)
+
+if __name__ == '__main__':
+    unittest.main()

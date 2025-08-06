@@ -1,39 +1,43 @@
-# TODO: DERRICK - Google App Engine Configuration
-"""
-TASKS FOR DERRICK:
-1. Set runtime to python39 or python311
-2. Configure environment variables for Google Cloud Project
-3. Set up automatic scaling parameters
-4. Configure health checks
-5. Set up static file handling if needed
-6. Add any custom entrypoint if required
-
-REQUIRED CONFIGURATION:
-- Runtime environment
-- Environment variables for database
-- Scaling configuration
-- Health check endpoints
-
-INTEGRATION WITH TEAM:
-- Work with Luis to determine required environment variables
-- Coordinate with team on scaling requirements
-- Ensure proper configuration for Firestore access
-
-EXAMPLE STRUCTURE:
 runtime: python39
-service: default
 
+# Environment variables for production
 env_variables:
-  GOOGLE_CLOUD_PROJECT: "your-project-id"
-  # Add other environment variables here
+  GOOGLE_CLOUD_PROJECT: url-shortener-luis-2025-dac25
+  FIRESTORE_COLLECTION: url_mappings
+  FLASK_DEBUG: false
+  SECRET_KEY: prod-secret-key-url-shortener-2025-secure
+  USE_MOCK_DATABASE: false
 
+# Automatic scaling configuration
 automatic_scaling:
   min_instances: 0
   max_instances: 10
   target_cpu_utilization: 0.6
 
-health_check:
-  enable_health_check: true
-"""
+# Instance configuration
+instance_class: F1
 
-# DERRICK: Replace this comment with actual app.yaml configuration
+# Static file handling
+handlers:
+- url: /static
+  static_dir: static
+  secure: always
+
+- url: /.*
+  script: auto
+  secure: always
+
+# Health check configuration
+readiness_check:
+  path: "/api/health"
+  check_interval_sec: 5
+  timeout_sec: 4
+  failure_threshold: 2
+  success_threshold: 2
+
+liveness_check:
+  path: "/api/health"
+  check_interval_sec: 30
+  timeout_sec: 4
+  failure_threshold: 4
+  success_threshold: 2
