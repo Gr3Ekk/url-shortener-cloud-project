@@ -1,0 +1,29 @@
+runtime: python39
+service: default
+entrypoint: gunicorn -b :$PORT app:app
+
+env_variables:
+  # Google Cloud Project Configuration
+  GOOGLE_CLOUD_PROJECT: "url-short-468206"
+  FIRESTORE_COLLECTION: "url_mappings"
+
+  # Flask Configuration
+  FLASK_DEBUG: false
+  SECRET_KEY: "dvdlAsKxbPd4abExa75qAd65ger6Kl86FXWTOfc-9Jw"
+
+  # Database Mode (false = use Firestore)
+  USE_MOCK_DATABASE: false
+
+  # Authentication credentials not needed in production (GAE uses service account by default)
+
+automatic_scaling:
+  min_instances: 0
+  max_instances: 10
+  target_cpu_utilization: 0.6
+
+health_check:
+  enable_health_check: true
+  check_interval_sec: 30
+  timeout_sec: 4
+  unhealthy_threshold: 3
+  healthy_threshold: 2
