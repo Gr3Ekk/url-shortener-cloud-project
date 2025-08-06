@@ -64,22 +64,102 @@
     </div>
 
     <script>
-        // TODO: Add JavaScript to interact with the API
-        // This should call the POST /api/shorten endpoint
-        // Handle form submission
-        // Display results
-        // Copy to clipboard functionality
+        // JavaScript to interact with the URL shortening API
         
-        document.getElementById('shortenForm').addEventListener('submit', function(e) {
+        document.getElementById('shortenForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            // TODO: Implement API call to /api/shorten
-            console.log('Form submitted - implement API call here');
+            
+            const urlInput = document.getElementById('urlInput');
+            const customAlias = document.getElementById('customAlias');
+            const resultDiv = document.getElementById('result');
+            const shortUrlElement = document.getElementById('shortUrl');
+            
+            // Get form values
+            const url = urlInput.value.trim();
+            const alias = customAlias.value.trim();
+            
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+            
+            // Prepare request data
+            const requestData = { url: url };
+            if (alias) {
+                requestData.custom_alias = alias;
+            }
+            
+            try {
+                // Show loading state
+                const submitButton = document.querySelector('button[type="submit"]');
+                const originalText = submitButton.textContent;
+                submitButton.textContent = 'Shortening...';
+                submitButton.disabled = true;
+                
+                // Make API call
+                const response = await fetch('/api/shorten', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    // Display success result
+                    shortUrlElement.innerHTML = `
+                        <strong><a href="${result.short_url}" target="_blank">${result.short_url}</a></strong>
+                        <br><small>Original: ${result.original_url}</small>
+                    `;
+                    resultDiv.style.display = 'block';
+                    
+                    // Store short URL for copying
+                    window.currentShortUrl = result.short_url;
+                    
+                    // Clear form
+                    urlInput.value = '';
+                    customAlias.value = '';
+                } else {
+                    // Display error
+                    alert('Error: ' + (result.error || 'Failed to shorten URL'));
+                }
+                
+                // Restore button
+                submitButton.textContent = originalText;
+                submitButton.disabled = false;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Network error: Please check if the server is running');
+                
+                // Restore button
+                document.querySelector('button[type="submit"]').textContent = 'Shorten URL';
+                document.querySelector('button[type="submit"]').disabled = false;
+            }
         });
         
         function copyToClipboard() {
-            // TODO: Implement copy functionality
-            console.log('Copy to clipboard - implement this');
+            if (window.currentShortUrl) {
+                navigator.clipboard.writeText(window.currentShortUrl).then(function() {
+                    // Show temporary success message
+                    const copyButton = document.querySelector('button[onclick="copyToClipboard()"]');
+                    const originalText = copyButton.textContent;
+                    copyButton.textContent = 'Copied!';
+                    copyButton.style.backgroundColor = '#28a745';
+                    
+                    setTimeout(() => {
+                        copyButton.textContent = originalText;
+                        copyButton.style.backgroundColor = '#007bff';
+                    }, 2000);
+                }).catch(function(err) {
+                    console.error('Could not copy text: ', err);
+                    alert('Could not copy to clipboard');
+                });
+            }
         }
+    </script>
     </script>
 </body>
 </html>
