@@ -5,4 +5,12 @@ __pycache__/
 *.pyd
 *.db
 *.sqlite3
-service-account.json
+service-account-key.json
+.git/
+.gitignore
+*.md
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

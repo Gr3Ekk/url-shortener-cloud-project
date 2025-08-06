@@ -5,6 +5,11 @@ COPY . /app
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-ENV GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/service-account.json
+# Note: In production, use environment variables instead of copying service account files
+ENV GOOGLE_APPLICATION_CREDENTIALS=/app/service-account-key.json
 
-CMD ["python", "app/main.py"]
+# Expose the port that Flask runs on
+EXPOSE 8080
+
+# Run the Flask application
+CMD ["python", "app.py"]
